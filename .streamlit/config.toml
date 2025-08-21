@@ -1,0 +1,6 @@
+[theme]
+primaryColor = "#58C0E7"                  # Hellblau aus dem Logo
+backgroundColor = "#F9FAFB"               # Hellgrau/Weiß
+secondaryBackgroundColor = "#FFFFFF"      # Reine Kartenfläche / Sekundärbereiche
+textColor = "#333333"                     # Dunkelgrau – bessere Lesbarkeit
+font = "sans serif"                       # Klarer moderner Font
