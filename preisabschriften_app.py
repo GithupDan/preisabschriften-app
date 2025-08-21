@@ -29,7 +29,7 @@ def load_default_planung():
 tab1, tab2, tab3, tab4, tab5 = st.tabs(["📊 IST-Daten", "📝 Planung verwalten", "📈 Analyse & Empfehlung", "📊 Visualisierung"])
 
 with tab1:
-    st.header("📊 IST-Daten hochladen")
+st.header("📊 IST-Daten hochladen")
     uploaded_ist = st.file_uploader("IST-Daten als CSV hochladen", type=["csv"])
     if uploaded_ist:
         df_ist = pd.read_csv(uploaded_ist, sep=";", encoding="utf-8")
@@ -42,7 +42,7 @@ with tab1:
         st.session_state["ist_daten"] = df_ist
 
 with tab2:
-    st.header("📝 Planung verwalten")
+st.header("📝 Planung verwalten")
     uploaded_plan = st.file_uploader("📤 Eigene Planung hochladen (.xlsx)", type=["xlsx"])
     if uploaded_plan:
         df_plan = pd.read_excel(uploaded_plan)
@@ -64,7 +64,7 @@ with tab2:
     )
 
 with tab3:
-    st.header("📈 Analyse & Handlungsempfehlung")
+st.header("📈 Analyse & Handlungsempfehlung")
 
     if "ist_daten" in st.session_state and "plan_daten" in st.session_state:
         df_ist = st.session_state["ist_daten"].copy()
@@ -114,7 +114,7 @@ with tab4:
     import seaborn as sns
     import matplotlib.pyplot as plt
     
-    st.header("📊 Visualisierung: Artikelstruktur & Analysen")
+st.header("📊 Visualisierung: Artikelstruktur & Analysen")
     
     if "ist_daten" in st.session_state:
         df_vis = st.session_state["ist_daten"].copy()
@@ -237,7 +237,7 @@ st.title("Merchify – Dynamische Preisabschriften")
 st.markdown("📊 Intelligente Steuerung deiner Preisaktionen mit Lager-, Absatz- & Reichweitendaten")
 st.markdown("---")
     
-    st.header("📊 Visualisierung & Drilldown")
+st.header("📊 Visualisierung & Drilldown")
     
     if "ist_daten" in st.session_state:
         df_vis = st.session_state["ist_daten"].copy()
