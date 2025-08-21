@@ -209,6 +209,36 @@ st.set_page_config(
 
 st.markdown("""
     <style>
+        .stApp { background-color: #f9f9fb; }
+        .stTabs [role="tab"] {
+            background-color: #ffffff;
+            color: #333;
+            padding: 10px;
+            margin-right: 4px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px 8px 0 0;
+        }
+        .stTabs [aria-selected="true"] {
+            background-color: #007acc !important;
+            color: white !important;
+            font-weight: bold;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+st.image("logo_merchify.png", width=220)
+st.title("Merchify – Dynamische Preisabschriften")
+st.markdown("🧠 *Smart Markdown Decisions. Real-Time. Retail Ready.*")
+st.markdown("---")
+
+st.set_page_config(
+    layout="wide",
+    page_title="Merchify – Preisabschriften",
+    page_icon="📉"
+)
+
+st.markdown("""
+    <style>
         body {
             font-family: "Segoe UI", sans-serif;
             background-color: #f9f9fb;
