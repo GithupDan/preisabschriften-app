@@ -5,7 +5,6 @@ import os
 model_path = "abschriften_model.pkl"
 model = joblib.load(model_path) if os.path.exists(model_path) else None
 
-
 import streamlit as st
 import pandas as pd
 import seaborn as sns
@@ -60,6 +59,28 @@ with tab1:
             plt.title("Reichweite nach Warengruppe und Preisstufe")
             st.pyplot(plt.gcf())
 
+            # 💡 ML-Vorschläge
+            st.subheader("🤖 Abschriften-Vorschläge (ML-Modell)")
+
+            if model is None:
+                st.warning("Kein ML-Modell gefunden. Stelle sicher, dass `abschriften_model.pkl` vorhanden ist.")
+            else:
+                df_ml = df.copy()
+
+                # Nur relevante Zeilen
+                df_ml = df_ml.dropna(subset=["Absatz", "Lagerbestand", "Preisstufe", "Warengruppe", "Saison", "Wochen_trend"])
+                
+                # Features vorbereiten
+                X = df_ml[["Absatz", "Lagerbestand", "Preisstufe", "Saison", "Wochen_trend", "Warengruppe"]]
+                X = pd.get_dummies(X, columns=["Warengruppe"], drop_first=True)
+
+                # Vorhersagen
+                predictions = model.predict(X)
+                df_ml["Abschriften_Vorschlag"] = predictions
+
+                # Ergebnis anzeigen
+                st.dataframe(df_ml[["Artikelnummer", "Warengruppe", "Preisstufe", "Abschriften_Vorschlag"]])
+
         except Exception as e:
             st.error(f"Fehler beim Laden der Datei: {e}")
 
@@ -75,4 +96,4 @@ with tab2:
             st.dataframe(df_plan)
 
         except Exception as e:
-            st.error(f"Fehler beim Laden der Datei: {e}")
+            st.e
