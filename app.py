@@ -1,100 +1,70 @@
-# app.py
 import streamlit as st
 import pandas as pd
-import os
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-# App-Layout
-st.set_page_config(page_title="Merchify", layout="wide")
+# Seiten-Layout definieren
+st.set_page_config(
+    page_title="Merchify – Preis- & Lageranalyse",
+    page_icon="📊",
+    layout="wide"
+)
 
-# Logo laden
-logo_path = "logo.png"
-if os.path.exists(logo_path):
-    st.sidebar.image(logo_path, use_container_width=True)
-else:
-    st.sidebar.warning("🚨 Logo konnte nicht geladen werden.")
+# Logo + Titel
+col1, col2 = st.columns([0.1, 0.9])
+with col1:
+    st.image("logo.png", width=70)
+with col2:
+    st.markdown("## **Merchify – Preis- & Lageranalyse**")
+    st.caption("Plan smarter. Reduziere besser.")
 
-st.sidebar.title("Merchify App")
-st.sidebar.markdown("**Price Optimization Made Simple**")
+# Tabs definieren
+tab1, tab2 = st.tabs(["📈 IST-Daten analysieren", "🗓️ Plandaten pflegen"])
 
-st.title(":bar_chart: Merchify - Preis- & Lageranalyse")
-
-# Tabs
-tab1, tab2 = st.tabs(["📦 IST-Daten analysieren", "📝 Plandaten pflegen"])
-
-# --- Tab 1: IST-Daten ---
+# === TAB 1 ===
 with tab1:
-    st.header(":inbox_tray: IST-Daten hochladen")
-    uploaded_file = st.file_uploader("Bitte eine Excel-Datei hochladen", type=["xlsx"])
-
-    if uploaded_file:
+    st.subheader("🔍 IST-Daten hochladen")
+    ist_file = st.file_uploader("Lade eine Excel-Datei mit dem Tabellenblatt **Artikeldaten** hoch.", type="xlsx", key="ist")
+    
+    if ist_file:
         try:
-            df_ist = pd.read_excel(uploaded_file, sheet_name='Artikeldaten')
-            st.success("IST-Daten erfolgreich geladen!")
+            df = pd.read_excel(ist_file, sheet_name="Artikeldaten")
+            st.success("Datei erfolgreich geladen ✅")
+            st.dataframe(df)
 
-            # Vorschau
-            st.subheader(":clipboard: Vorschau der Daten")
-            st.dataframe(df_ist.head())
+            # Gruppierung
+            df_filtered = df.dropna(subset=["Warengruppe", "Preisstufe"])
+            grouped = df_filtered.groupby(["Warengruppe", "Preisstufe"]).agg({
+                "Absatz": "sum",
+                "Lagerbestand": "sum"
+            }).reset_index()
 
-            # Filter & Auswahl
-            warengruppen = df_ist["Warengruppe"].unique()
-            auswahl = st.multiselect("Warengruppen auswählen:", warengruppen, default=list(warengruppen))
-            df_filtered = df_ist[df_ist["Warengruppe"].isin(auswahl)]
+            grouped["Reichweite_Berechnet"] = grouped["Lagerbestand"] / grouped["Absatz"]
 
-            # Reichweitenberechnung
-            reichweite_df = (
-                df_filtered
-                .groupby(["Warengruppe", "Preisstufe"])
-                .agg({
-                    "Lagerbestand": "sum",
-                    "Absatz": "sum"
-                })
-                .reset_index()
-            )
-            reichweite_df["Reichweite"] = reichweite_df["Lagerbestand"] / reichweite_df["Absatz"].replace(0, pd.NA)
+            st.subheader("📊 Reichweitenanalyse")
+            st.dataframe(grouped)
 
-            st.subheader("🧮 Berechnete Reichweite je Warengruppe & Preisstufe")
-            st.dataframe(reichweite_df)
-
-            st.subheader("📊 Visualisierung der Reichweiten")
-            fig, ax = plt.subplots(figsize=(10, 6))
-            sns.barplot(
-                data=reichweite_df,
-                x="Warengruppe",
-                y="Reichweite",
-                hue="Preisstufe",
-                palette="viridis",
-                ax=ax
-            )
+            # Visualisierung
+            st.subheader("📉 Visualisierung")
+            plt.figure(figsize=(10, 5))
+            sns.barplot(data=grouped, x="Warengruppe", y="Reichweite_Berechnet", hue="Preisstufe", palette="Blues")
             plt.xticks(rotation=45)
-            plt.title("Durchschnittliche Reichweite")
-            plt.ylabel("Reichweite (Lager/Absatz)")
-            plt.xlabel("Warengruppe")
-            st.pyplot(fig)
-
-            # Drilldown
-            st.subheader(":mag_right: Drilldown für ausgewählte Warengruppe")
-            gruppe = st.selectbox("Bitte Warengruppe auswählen", auswahl)
-            df_drill = df_filtered[df_filtered["Warengruppe"] == gruppe]
-            st.dataframe(df_drill)
+            plt.title("Reichweite nach Warengruppe und Preisstufe")
+            st.pyplot(plt.gcf())
 
         except Exception as e:
             st.error(f"Fehler beim Laden der Datei: {e}")
-    else:
-        st.info("Bitte lade eine Excel-Datei mit dem Tabellenblatt 'Artikeldaten' hoch.")
 
-# --- Tab 2: Plandaten pflegen ---
+# === TAB 2 ===
 with tab2:
-    st.header("Plandaten (Excel Register 'Plandaten')")
-    uploaded_plan = st.file_uploader("Plandaten hochladen", type="xlsx", key="plan")
+    st.subheader("📥 Plandaten hochladen")
+    plan_file = st.file_uploader("Bitte lade eine Excel-Datei mit dem Tabellenblatt **Plandaten** hoch.", type="xlsx", key="plan")
 
-    if uploaded_plan:
+    if plan_file:
         try:
-            df_plan = pd.read_excel(uploaded_plan, sheet_name='Plandaten')
-            st.success("Plandaten erfolgreich geladen!")
+            df_plan = pd.read_excel(plan_file, sheet_name="Plandaten")
+            st.success("Plandaten erfolgreich geladen ✅")
             st.dataframe(df_plan)
+
         except Exception as e:
-            st.error(f"Fehler beim Laden der Plandaten: {e}")
-    else:
-        st.info("Bitte lade eine Excel-Datei mit dem Tabellenblatt 'Plandaten' hoch.")
+            st.error(f"Fehler beim Laden der Datei: {e}")
