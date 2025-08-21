@@ -1,42 +1,69 @@
-
+# app.py
 import streamlit as st
 import pandas as pd
-import numpy as np
-from pathlib import Path
+import os
+import seaborn as sns
+import matplotlib.pyplot as plt
 
-# Seitenlayout und Logo
+# Optional: Theme via config.toml falls gewünscht (.streamlit/config.toml)
+# [theme]
+# primaryColor = "#1c7ed6"
+# backgroundColor = "#ffffff"
+# secondaryBackgroundColor = "#f8f9fa"
+# textColor = "#212529"
+# font = "sans serif"
+
+# App-Layout
 st.set_page_config(page_title="Merchify", layout="wide")
 
-# Logo einbinden
-logo_path = Path(__file__).parent / "logo.png"
-with st.sidebar:
-    if logo_path.exists():
-        st.image(str(logo_path), use_container_width=True)
-    else:
-        st.write("🧾 MERCHIFY")
-        st.caption("Price Optimization Made Simple")
+# Logo laden
+logo_path = "logo.png"
+if os.path.exists(logo_path):
+    st.sidebar.image(logo_path, use_container_width=True)
+else:
+    st.sidebar.warning("🚨 Logo konnte nicht geladen werden.")
 
-    st.markdown("---")
-    st.header("Navigation")
-    selection = st.radio("Gehe zu:", ["📥 IST-Daten", "📊 Analyse & Empfehlung", "🗓️ Planung verwalten"])
+st.sidebar.title("Merchify App")
+st.sidebar.markdown("**Price Optimization Made Simple**")
 
-# Beispielinhalte für jede Seite
-if selection == "📥 IST-Daten":
-    st.header("📥 IST-Daten hochladen")
-    uploaded_file = st.file_uploader("Lade deine CSV-Datei hoch", type=["csv"])
-    if uploaded_file is not None:
-        df = pd.read_csv(uploaded_file)
-        st.success("Datei erfolgreich geladen.")
-        st.dataframe(df)
+st.title(":bar_chart: Merchify - Preis- & Lageranalyse")
 
-elif selection == "📊 Analyse & Empfehlung":
-    st.header("📊 Analyse & Empfehlung")
-    st.write("Hier könnten Visualisierungen und Empfehlungen basierend auf den IST-Daten stehen.")
+# Dateiupload
+st.header(":inbox_tray: IST-Daten hochladen")
+uploaded_file = st.file_uploader("Bitte eine Excel-Datei hochladen", type=["xlsx"])
 
-elif selection == "🗓️ Planung verwalten":
-    st.header("🗓️ Planung verwalten")
-    st.write("Hier kannst du Planwerte eingeben und verwalten.")
+if uploaded_file:
+    df = pd.read_excel(uploaded_file)
+    st.success("Datei erfolgreich geladen!")
 
-# Fußzeile
-st.markdown("---")
-st.caption("© 2025 Merchify – Price Optimization Made Simple")
+    # Basisansicht
+    st.subheader(":clipboard: Vorschau der Daten")
+    st.dataframe(df.head())
+
+    # Filter & Auswahl
+    warengruppen = df["Warengruppe"].unique()
+    auswahl = st.multiselect("Warengruppen auswählen:", warengruppen, default=list(warengruppen))
+    df_filtered = df[df["Warengruppe"].isin(auswahl)]
+
+    # Heatmap vorbereiten
+    st.subheader(":art: Heatmap: Artikelanzahl & Reichweite")
+    heatmap_data = df_filtered.groupby(["Warengruppe", "Preisstufe"]).agg(
+        Artikelanzahl=("Artikelnummer", "count"),
+        Reichweite_Berechnet=("Lagerbestand", "sum") / df_filtered.groupby(["Warengruppe", "Preisstufe"]).agg({"Absatz": "sum"})
+    ).reset_index()
+
+    heatmap_data_pivot = heatmap_data.pivot(index="Warengruppe", columns="Preisstufe", values="Reichweite_Berechnet")
+
+    plt.figure(figsize=(12, 6))
+    sns.heatmap(heatmap_data_pivot, cmap="YlGnBu", annot=True, fmt=".1f", linewidths=.5)
+    plt.title("Reichweite pro Warengruppe & Preisstufe")
+    st.pyplot(plt.gcf())
+
+    # Drilldown
+    st.subheader(":mag_right: Drilldown für ausgewählte Warengruppe")
+    gruppe = st.selectbox("Bitte Warengruppe auswählen", auswahl)
+    df_drill = df_filtered[df_filtered["Warengruppe"] == gruppe]
+    st.dataframe(df_drill)
+
+else:
+    st.info("Bitte lade eine Excel-Datei mit den notwendigen Daten hoch. Erwartete Spalten: Artikelnummer, Warengruppe, Preisstufe, Lagerbestand, Absatz")
