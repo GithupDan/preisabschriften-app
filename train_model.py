@@ -49,3 +49,23 @@ if __name__ == "__main__":
 # Modell speichern
 joblib.dump(model, "abschriften_model.pkl")
 print("✅ Modell gespeichert als 'abschriften_model.pkl'")
+
+def generate_ml_prediction(df):
+    if model is None:
+        return None
+
+    try:
+        # Nur benötigte Features verwenden
+        df_input = df.copy()
+        df_input = pd.get_dummies(df_input, columns=["Warengruppe"], drop_first=True)
+
+        # Gleiche Features wie beim Training (ggf. anpassen!)
+        used_cols = ["Absatz", "Lagerbestand", "Preisstufe", "Saison", "Wochen_trend"]
+        used_cols += [col for col in df_input.columns if "Warengruppe_" in col]
+        df_input = df_input[used_cols]
+
+        return model.predict(df_input)
+    except Exception as e:
+        print(f"ML Prediction Error: {e}")
+        return None
+
