@@ -45,3 +45,7 @@ def train_model():
 # Funktion ausführen
 if __name__ == "__main__":
     train_model()
+
+# Modell speichern
+joblib.dump(model, "abschriften_model.pkl")
+print("✅ Modell gespeichert als 'abschriften_model.pkl'")
