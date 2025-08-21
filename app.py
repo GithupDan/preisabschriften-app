@@ -1,3 +1,11 @@
+import joblib
+import os
+
+# Modell laden
+model_path = "abschriften_model.pkl"
+model = joblib.load(model_path) if os.path.exists(model_path) else None
+
+
 import streamlit as st
 import pandas as pd
 import seaborn as sns
