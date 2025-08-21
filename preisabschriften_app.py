@@ -26,7 +26,7 @@ def load_default_planung():
 
 
 # App Tabs: IST-Daten | Planung | Analyse & Empfehlung
-tab1, tab2, tab3 = st.tabs(["📊 IST-Daten", "📝 Planung verwalten", "📈 Analyse & Empfehlung"])
+tab1, tab2, tab3, tab4 = st.tabs(["📊 IST-Daten", "📝 Planung verwalten", "📈 Analyse & Empfehlung", "📊 Visualisierung"])
 
 with tab1:
     st.header("📊 IST-Daten hochladen")
@@ -109,3 +109,50 @@ with tab3:
         )
     else:
         st.info("Bitte lade zuerst IST-Daten und Planwerte in den vorherigen Tabs hoch.")
+
+with tab4:
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+    
+    st.header("📊 Visualisierung: Artikelstruktur & Reichweiten")
+    
+    if "ist_daten" in st.session_state:
+        df_vis = st.session_state["ist_daten"].copy()
+        df_vis.columns = [str(c).strip() for c in df_vis.columns]
+    
+        # Konvertieren und filtern
+        df_vis["Preis"] = pd.to_numeric(df_vis["Preis"], errors="coerce")
+        df_vis["RW"] = pd.to_numeric(df_vis["RW"], errors="coerce")
+        df_vis["Warengruppe"] = df_vis["Warengruppe"].str.strip()
+    
+        # Preisstufen definieren
+        preis_bins = [0, 20, 30, 40, 50, 60, 100]
+        preis_labels = ["<20", "20–30", "30–40", "40–50", "50–60", "60+"]
+        df_vis["Preisstufe"] = pd.cut(df_vis["Preis"], bins=preis_bins, labels=preis_labels)
+    
+        # Pivot-Tabellen erstellen
+        pivot_count = df_vis.pivot_table(index="Warengruppe", columns="Preisstufe", values="SKU", aggfunc="count", fill_value=0)
+        pivot_rw = df_vis.pivot_table(index="Warengruppe", columns="Preisstufe", values="RW", aggfunc="sum", fill_value=0)
+    
+        # Stil setzen
+        sns.set(style="whitegrid")
+    
+        # Heatmap 1 – Artikelanzahl
+        st.subheader("🔢 Artikelanzahl pro Warengruppe & Preisstufe")
+        fig1, ax1 = plt.subplots(figsize=(10, 5))
+        sns.heatmap(pivot_count, annot=True, fmt="d", cmap="PuBuGn", cbar=True, ax=ax1)
+        ax1.set_xlabel("Preisstufe")
+        ax1.set_ylabel("Warengruppe")
+        ax1.set_title("Anzahl Artikel je Preisstufe")
+        st.pyplot(fig1)
+    
+        # Heatmap 2 – Reichweite
+        st.subheader("📏 Kumulierte Reichweite pro Warengruppe & Preisstufe")
+        fig2, ax2 = plt.subplots(figsize=(10, 5))
+        sns.heatmap(pivot_rw, annot=True, fmt=".1f", cmap="YlGnBu", cbar=True, ax=ax2)
+        ax2.set_xlabel("Preisstufe")
+        ax2.set_ylabel("Warengruppe")
+        ax2.set_title("Summierte RW je Preisstufe")
+        st.pyplot(fig2)
+    else:
+        st.info("Bitte lade zuerst die IST-Daten im Tab '📊 IST-Daten' hoch.")
